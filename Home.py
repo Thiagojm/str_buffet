@@ -44,13 +44,18 @@ with st.container():
         }
 
         col3, col4 = st.columns(2)
-        # Convert dictionary to table format
-        table_data_1 = {"Data": list(data_1.keys()), "": list(data_1.values())}
-        table_data_2 = {"Data": list(data_2.keys()), "": list(data_2.values())}
+        # Convert dictionary to table format and ensure string values for Arrow compatibility
+        def safe_str(value):
+            if pd.isna(value) or value is None:
+                return "N/A"
+            return str(value)
 
-        # Fica dando warning
-        col3.dataframe(table_data_1, hide_index=True, use_container_width=True)
-        col4.dataframe(table_data_2, hide_index=True, use_container_width=True)
+        table_data_1 = {"Data": list(data_1.keys()), "": [safe_str(v) for v in data_1.values()]}
+        table_data_2 = {"Data": list(data_2.keys()), "": [safe_str(v) for v in data_2.values()]}
+
+        # Fixed deprecation warning - replaced use_container_width with width
+        col3.dataframe(table_data_1, hide_index=True, width='stretch')
+        col4.dataframe(table_data_2, hide_index=True, width='stretch')
 
 st.divider()
 
@@ -59,6 +64,9 @@ with st.container():
         # Grafico lucro liquido
         graph_lucro_liq = pd.DataFrame(data["graph_lucro_liq"])
         graph_lucro_liq.dropna(subset=['NetIncome'], inplace=True)
+        # Ensure proper data types for Arrow serialization
+        graph_lucro_liq["asOfDate"] = pd.to_datetime(graph_lucro_liq["asOfDate"])
+        graph_lucro_liq["NetIncome"] = graph_lucro_liq["NetIncome"].astype(float)
         st.dataframe(graph_lucro_liq)
         # Create the bar plot using matplotlib
         plt.figure()
@@ -77,6 +85,9 @@ with st.container():
         # Grafico patrimonio liquido
         graph_patr_liq = pd.DataFrame(data["graph_patr_liq"])
         graph_patr_liq.dropna(subset=['StockholdersEquity'], inplace=True)
+        # Ensure proper data types for Arrow serialization
+        graph_patr_liq["asOfDate"] = pd.to_datetime(graph_patr_liq["asOfDate"])
+        graph_patr_liq["StockholdersEquity"] = graph_patr_liq["StockholdersEquity"].astype(float)
         st.dataframe(graph_patr_liq)
         # Create the bar plot using matplotlib
         plt.figure()

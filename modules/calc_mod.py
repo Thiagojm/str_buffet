@@ -3,6 +3,7 @@
 # External imports
 from yahooquery import Ticker
 import streamlit as st
+import pandas as pd
 
 
 @st.cache_data(ttl=3600, show_spinner="Fetching data from API...")
@@ -63,15 +64,18 @@ def y_stock(stock_name):
         # TODO: Consertar o calculo do lucro (nao esta considerando os valores certos pois a lista tem tamanhos variados)
         df = income_stat[["asOfDate", "NetIncome"]].copy()
         df.set_index('asOfDate', inplace=True)
-        crescimento_lucro_12m = ((df["NetIncome"][3] / df["NetIncome"][2]) - 1) if (df["NetIncome"][2] != 0) else 0
+        crescimento_lucro_12m = ((df["NetIncome"].iloc[3] / df["NetIncome"].iloc[2]) - 1) if (df["NetIncome"].iloc[2] != 0) else 0
         crescimento_lucro_36m = ((
-            df["NetIncome"][3] / df["NetIncome"][0]) ** (1 / 3) - 1)  if (df["NetIncome"][0] != 0) else 0
+            df["NetIncome"].iloc[3] / df["NetIncome"].iloc[0]) ** (1 / 3) - 1)  if (df["NetIncome"].iloc[0] != 0) else 0
 
         ########### Gráficos ##############
         # Gráfico Lucro Líquido
         df_graph_lucro_liq = income_stat[["asOfDate", "NetIncome"]].copy()
         # Transformando em milhões para melhor caber no gráfico
         df_graph_lucro_liq["NetIncome"] = df_graph_lucro_liq["NetIncome"] / 1000000
+        # Ensure proper data types for Arrow serialization
+        df_graph_lucro_liq["asOfDate"] = pd.to_datetime(df_graph_lucro_liq["asOfDate"])
+        df_graph_lucro_liq["NetIncome"] = df_graph_lucro_liq["NetIncome"].astype(float)
         ll_1 = {"NetIncome": df_graph_lucro_liq.get("NetIncome").to_list()}
         ll_2 = {"asOfDate": df_graph_lucro_liq.get("asOfDate").to_list()}
         ll_2.update(ll_1)
@@ -83,6 +87,9 @@ def y_stock(stock_name):
         df_graph_patr_liq = balance[["asOfDate", "StockholdersEquity"]].copy()
         # Transformando em milhões para melhor caber no gráfico
         df_graph_patr_liq["StockholdersEquity"] = df_graph_patr_liq["StockholdersEquity"] / 1000000
+        # Ensure proper data types for Arrow serialization
+        df_graph_patr_liq["asOfDate"] = pd.to_datetime(df_graph_patr_liq["asOfDate"])
+        df_graph_patr_liq["StockholdersEquity"] = df_graph_patr_liq["StockholdersEquity"].astype(float)
         pl_1 = {"StockholdersEquity": df_graph_patr_liq.get(
             "StockholdersEquity").to_list()}
         patri_liq_12m = (pl_1.get('StockholdersEquity')
